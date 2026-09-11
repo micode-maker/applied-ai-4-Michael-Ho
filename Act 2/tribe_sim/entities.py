@@ -171,26 +171,29 @@ class Gatherer:
         self.food_collected += portion
     
     def calculate_fitness(self):
-        # STUDENT ASSIGNMENT 1: Implement a better fitness function
-        # Current version only considers survival time - very basic!
-        #
-        # Available variables to consider:
-        # - self.age: how long this gatherer has survived
-        # - self.food_collected: total food gathered
-        # - self.energy: current energy level (0-100)
-        # - self.alive: whether still alive
-        # - self.genes: dict with 'speed', 'caution', 'search_pattern', 'efficiency', 'cooperation'
-        #
-        # Strategy hints:
-        # 1. Balance survival vs resource gathering (both matter!)
-        # 2. Consider rewarding efficient gatherers (more food per time alive)
-        # 3. Maybe penalize overly cautious gatherers who survive but gather little?
-        # 4. Could reward cooperation or punish antisocial behavior
-        # 5. Think about edge cases: dead vs alive, high energy vs low energy
-        #
-        # Remember: Higher fitness = more likely to reproduce!
-        
-        return self.age / 100.0  # Minimal version: just survival time
+            # Base points for survival time
+            fitness = self.age * 0.5
+            
+            # Significant reward for gathering resources
+            fitness += self.food_collected * 15.0
+            
+            # Efficiency bonus: food gathered per unit of time. Use max(1, self.age) to prevent a division by zero error if age is 0
+            efficiency = self.food_collected / max(1, self.age)
+            fitness += efficiency * 50.0
+            
+            # Reward gatherers that end with high energy
+            fitness += self.energy * 0.2
+            
+            # If they lived a decent amount of time but found 0 food, cut their score in half
+            if self.age > 50 and self.food_collected == 0:
+                fitness *= 0.5
+                
+            # Only reward survival if they actually contributed food to the tribe
+            if self.alive and self.food_collected > 0:
+                fitness *= 1.2
+                
+            # Ensure fitness never drops below 0
+            return max(0.0, fitness)
     
     def take_damage(self):
         """Handle death/life loss"""
